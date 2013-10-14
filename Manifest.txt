@@ -1,0 +1,17 @@
+History.txt
+Manifest.txt
+PostInstall.txt
+README.rdoc
+Rakefile
+lib/stopinator.rb
+lib/stopinator/base.rb
+lib/stopinator/confighelper.rb
+lib/stopinator/version.rb
+bin/stopinator
+script/console
+script/destroy
+script/generate
+spec/spec.opts
+spec/spec_helper.rb
+spec/stopinator_spec.rb
+tasks/rspec.rake

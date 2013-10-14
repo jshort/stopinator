@@ -1,0 +1,142 @@
+= stopinator
+
+== DESCRIPTION:
+
+The stopinator is an executable gem used for stopping and starting AWS based environments based on a simple configuration file format.  It uses logic in the configuration file to programatically start the environment in the prescribed order and guarantee requisite services are running being proceeding.  
+
+When the stop feature is used, it simply stops the AWS intances as defined in the configuration file.  The status command can be used to confirm the state of the instances after the command returns.
+
+The start feature uses the startPriority in the configuration file to programatically start the instances/groups in the order desired.  In addition, the instances/groups can have a 'startCheck' which is simply a set of commands that are run remotely on the instance after AWS reports that it is running to make sure the software/middleware/services needed to be running are up before proceeding to the next highest priority instance(s)/group.  The 'cmdArray' should contain commands that simply should return 0 when your checks are successful and non-zero otherwise.  Instances and groups with the same 'startPriorty' will be started in the order they appear in the config file so if there is a hard dependency of order, make sure the instances/groups have different startPriority.
+
+== FEATURES/PROBLEMS:
+
+* TODO: Add config file validation
+* TODO: Implement a config feature to define a default/top-level jumpbox that all ssh commands go through (and allow override at lower levels)
+* TODO: Allow combinations of instance blocks and group blocks
+* TODO: Scrub example configs
+
+== SYNOPSIS:
+
+Sample usage:
+    
+To check status
+
+  > stopinator -e ~/env.yml --key-file=~/.ssh/key1.pem,~/.ssh/key2.pem status
+
+To stop
+
+  > stopinator -e ~/env.yml --key-file=~/.ssh/key1.pem -c ~/aws_config.yml stop
+
+To start
+
+  > stopinator -e ~/env.yml --key-file=~/.ssh/key1.pem start
+
+
+== REQUIREMENTS:
+
+
+* AWS Config file (yaml) formatted as follows:
+    access_key_id: <key_id>
+    secret_access_key: <secret key>
+* Environment Config file (yaml) usage.  A config file should have *either* an 'instances' stanza or a 'groups' stanza.  If both are available, 'instances' will take precedence.
+  * Instance by instance (higher priority means started sooner):
+      env: testibyi
+      instances: 
+        - instanceId: i-11111111
+          region: us-west-2
+          startPriority: 50
+          startCheck: 
+            cmdArray:                     
+              - service crond status | grep running
+              - service sshd status | grep running
+        - instanceId: i-22222222
+          region: us-west-2
+          startPriority: 100
+          startCheck: 
+            sshUser: ec2-user
+            cmdArray: 
+              - service crond status | grep running
+              - service sshd status | grep running
+  * By groups using Name tag regular expression matching (higher priority means started sooner):
+      env: testregex
+      groups:
+        - regex: !ruby/regexp /^test.*$/
+          region: us-west-2
+          startPriority: 50
+          startCheck: 
+            sshUser: ec2-user 
+            cmdArray:
+              - service crond status | grep running
+              - service sshd status | grep running
+        - regex: !ruby/regexp /^other.*$/
+          region: us-west-2
+          startPriority: 100
+          startCheck: 
+            sshUser: ec2-user 
+            cmdArray:
+              - service crond status | grep running
+              - service sshd status | grep running
+  * SSH Options (all of the following code blocks is for the startCheck hash on either an instance or group)
+    * If the instance using this startCheck has a public IP, it uses it plus the sshUser for ssh communication.  If it does not have a public ip address, it's assumed that it's instant tag 'Name' is an ssh host configured in the users ssh config file.
+        startCheck: 
+          sshUser: ec2-user 
+          cmdArray:
+            - service crond status | grep running
+            - service sshd status | grep running
+    * If a jumpbox is specified, then it uses it as an ssh proxy command to jump to the private ip address of the instance (note: if no user is specified, it's assumed that your ssh config takes into account the user for the jumpbox)
+        startCheck: 
+          sshUser: root           
+          jumpbox: myjumpbox    
+          jumpboxUser: ec2-user                  
+          cmdArray:                     
+            - service crond status | grep running
+            - service sshd status | grep running
+    * The final options is to explicitly list an ssh hostname in the startcheck.  This can be a public ip or hostname or an alias configured in the users ssh config.
+        startCheck: 
+          sshUser: root           
+          sshHostName: myinstanceAlias                
+          cmdArray:                     
+            - service crond status | grep running
+            - service sshd status | grep running
+    * The following of the defaults for the start checks attributes:
+        startCheck: 
+          sshHostName: test1            # default empty
+          sshUser: ec2-user             # default root
+          jumpbox: tardis.slidev.org    # default empty
+          jumpboxUser: ec2-user         # default empty
+          numretries: 5                 # default 5
+          retryinterval: 30             # default 30
+          cmdArray:                     # default empty...if empty, just wait retry*interval seconds
+            - cmd1
+            - cmd2
+
+== INSTALL:
+
+* In the stopinator root directory, run:
+    > gem build stopinator.gemspec
+    > gem install stopinator-*.gem
+
+== LICENSE:
+
+(The MIT License)
+
+Copyright (c) 2013 jshort
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
