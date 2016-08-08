@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+
 =begin
         This script will stop or start an environment or set of machines based on a yaml input file called env.yml input file
 
@@ -8,10 +9,10 @@
         secret_access_key: YOUR_SECRET_ACCESS_KEY
 
 =end
+
 require 'rubygems'
 require 'yaml'
 require 'aws-sdk'
-#require File.expand_path('sliAWSLibrary.rb', File.dirname(__FILE__))
 require 'optparse'
 require 'stopinator'
 
@@ -21,49 +22,51 @@ require 'stopinator'
 
 ## Parse input or throw up help
 
-#set defaults in initial hash and optparse will override if passed
-RequiredFlags = [:envconfig, :'key-file']
-Commands = ['start', 'stop', 'status']
-options = {:awsApiConfig => '~/aws_config.yml'}
+# set defaults in initial hash and optparse will override if passed
+
+REQUIRED_FLAGS = [:envconfig, :'key-file']
+COMMANDS = ['start', 'stop', 'status']
+
+options = {:aws_api_config => '~/aws_config.yml'}
 
 op = OptionParser.new do |x|
-    x.banner = 'Usage: stopinator [OPTIONS] COMMAND'
-    x.separator ''
-    x.separator 'Commands: '
-    x.separator '    start                            Start the environment based on supplied config'
-    x.separator '    stop                             Stop the environment based on supplied config'
-    x.separator '    status                           Status of the environment based on supplied config'
-    x.separator ''
-    x.separator 'Required flags: '
+  x.banner = 'Usage: stopinator [OPTIONS] COMMAND'
+  x.separator ''
+  x.separator 'Commands: '
+  x.separator '    start                            Start the environment based on supplied config'
+  x.separator '    stop                             Stop the environment based on supplied config'
+  x.separator '    status                           Status of the environment based on supplied config'
+  x.separator ''
+  x.separator 'Required flags: '
 
-    x.on("-e", "--envconfig=PATH", "The path to the environment config file") do |env|
-      options[:envconfig] = env
+  x.on('-e', '--envconfig=PATH', 'The path to the environment config file') do |env|
+    options[:envconfig] = env
+  end
+
+  x.on('--key-file=PATH', 'The path of the key pair (can pass multiple using commas: --key-file=key1,key2)') do |kp|
+    kp_arr = []
+    kp.split(',').each do |el|
+      kp_arr.push File.expand_path el
     end
+    options[:'key-file'] = kp_arr
+  end
 
-    x.on("--key-file=PATH", "The path of the key pair (can pass multiple using commas: --key-file=key1,key2)") do |kp|
-      kp_arr = []
-      kp.split(',').each do |el|
-        kp_arr.push File.expand_path el
-      end
-      options[:'key-file'] = kp_arr
-    end
+  x.separator ''
+  x.separator 'Common options: '
 
-    x.separator ''
-    x.separator 'Common options: '
+  x.on('-c', '--config=PATH', 'The path to the AWS API key config file (default ~/aws_config.yml)') do |aws|
+    options[:aws_api_config] = aws
+  end
 
-    x.on("-c", "--config=PATH", "The path to the AWS API key config file (default ~/aws_config.yml)") do |aws|
-      options[:awsApiConfig] = aws
-    end
+  x.on('-h', '--help', 'Show this message') do
+    puts op
+    exit
+  end
 
-    x.on("-h", "--help", "Show this message") do 
-      puts op
-      exit
-    end
-
-    x.on("-v", "--version", "Show version") do 
-      puts "stopinator version #{Gem.loaded_specs["stopinator"].version}"
-      exit 
-    end
+  x.on('-v', '--version', 'Show version') do
+    puts "stopinator version #{Gem.loaded_specs['stopinator'].version}"
+    exit
+  end
 end
 
 
@@ -71,18 +74,18 @@ end
 begin
   # parse options, parse! removes elements from ARGV so leftovers are positional arg(s)
   op.parse!(ARGV)
-  missing = RequiredFlags.select { |p| options[p].nil? }
-  if not missing.empty?
+  missing = REQUIRED_FLAGS.select { |p| options[p].nil? }
+  if !missing.empty?
     puts "Missing options : #{missing.join ', '}"
     puts op
     exit
-  elsif ARGV.size != 1 || !(Commands.include? ARGV[0])
-    puts "Only one command is allowed of the following : #{Commands.join ', '}"
+  elsif ARGV.size != 1 || !(COMMANDS.include? ARGV[0])
+    puts "Only one command is allowed of the following : #{COMMANDS.join ', '}"
     puts op
     exit
   end
   currentCommand = ARGV[0]
-    
+
 rescue OptionParser::InvalidOption, OptionParser::MissingArgument
   puts $!.to_s
   puts op
@@ -96,22 +99,14 @@ end
 startTime = Time.new
 puts "Start time: #{startTime}"
 
-Stopinator.init( ConfigHelper.awsConfigSetup(options[:awsApiConfig], op), options[:'key-name'], options[:'key-file'] )
+Stopinator.init(ConfigHelper.awsConfigSetup(options[:aws_api_config], op),
+                options[:'key-name'], options[:'key-file'])
 
-ENVHASH = ConfigHelper.envConfigSetup( options[:envconfig], op )
+ENVHASH = ConfigHelper.envConfigSetup(options[:envconfig], op)
 
-Stopinator.send( currentCommand, ENVHASH )
+Stopinator.send(currentCommand, ENVHASH)
 
 stopTime = Time.new
 puts "Stop time: #{stopTime}"
 
 puts "Total time: #{ (stopTime - startTime) / 60.0} minutes"
-
-
-
-
-
-
-
-
-

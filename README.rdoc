@@ -2,7 +2,7 @@
 
 == DESCRIPTION:
 
-The stopinator is an executable gem used for stopping and starting AWS based environments based on a simple configuration file format.  It uses logic in the configuration file to programatically start the environment in the prescribed order and guarantee requisite services are running being proceeding.  
+The stopinator is an executable gem used for stopping and starting AWS based environments based on a simple configuration file format.  It uses logic in the configuration file to programatically start the environment in the prescribed order and guarantee requisite services are running being proceeding.
 
 When the stop feature is used, it simply stops the AWS intances as defined in the configuration file.  The status command can be used to confirm the state of the instances after the command returns.
 
@@ -18,7 +18,7 @@ The start feature uses the startPriority in the configuration file to programati
 == SYNOPSIS:
 
 Sample usage:
-    
+
 To check status
 
   > stopinator -e ~/env.yml --key-file=~/.ssh/key1.pem,~/.ssh/key2.pem status
@@ -41,20 +41,20 @@ To start
 * Environment Config file (yaml) usage.  A config file should have *either* an 'instances' stanza or a 'groups' stanza.  If both are available, 'instances' will take precedence.
   * Instance by instance (higher priority means started sooner):
       env: testibyi
-      instances: 
+      instances:
         - instanceId: i-11111111
           region: us-west-2
           startPriority: 50
-          startCheck: 
-            cmdArray:                     
+          startCheck:
+            cmdArray:
               - service crond status | grep running
               - service sshd status | grep running
         - instanceId: i-22222222
           region: us-west-2
           startPriority: 100
-          startCheck: 
+          startCheck:
             sshUser: ec2-user
-            cmdArray: 
+            cmdArray:
               - service crond status | grep running
               - service sshd status | grep running
   * By groups using Name tag regular expression matching (higher priority means started sooner):
@@ -63,46 +63,46 @@ To start
         - regex: !ruby/regexp /^test.*$/
           region: us-west-2
           startPriority: 50
-          startCheck: 
-            sshUser: ec2-user 
+          startCheck:
+            sshUser: ec2-user
             cmdArray:
               - service crond status | grep running
               - service sshd status | grep running
         - regex: !ruby/regexp /^other.*$/
           region: us-west-2
           startPriority: 100
-          startCheck: 
-            sshUser: ec2-user 
+          startCheck:
+            sshUser: ec2-user
             cmdArray:
               - service crond status | grep running
               - service sshd status | grep running
   * SSH Options (all of the following code blocks is for the startCheck hash on either an instance or group)
     * If the instance using this startCheck has a public IP, it uses it plus the sshUser for ssh communication.  If it does not have a public ip address, it's assumed that it's instant tag 'Name' is an ssh host configured in the users ssh config file.
-        startCheck: 
-          sshUser: ec2-user 
+        startCheck:
+          sshUser: ec2-user
           cmdArray:
             - service crond status | grep running
             - service sshd status | grep running
     * If a jumpbox is specified, then it uses it as an ssh proxy command to jump to the private ip address of the instance (note: if no user is specified, it's assumed that your ssh config takes into account the user for the jumpbox)
-        startCheck: 
-          sshUser: root           
-          jumpbox: myjumpbox    
-          jumpboxUser: ec2-user                  
-          cmdArray:                     
+        startCheck:
+          sshUser: root
+          jumpbox: myjumpbox
+          jumpboxUser: ec2-user
+          cmdArray:
             - service crond status | grep running
             - service sshd status | grep running
     * The final options is to explicitly list an ssh hostname in the startcheck.  This can be a public ip or hostname or an alias configured in the users ssh config.
-        startCheck: 
-          sshUser: root           
-          sshHostName: myinstanceAlias                
-          cmdArray:                     
+        startCheck:
+          sshUser: root
+          sshHostName: myinstanceAlias
+          cmdArray:
             - service crond status | grep running
             - service sshd status | grep running
     * The following of the defaults for the start checks attributes:
-        startCheck: 
+        startCheck:
           sshHostName: test1            # default empty
           sshUser: ec2-user             # default root
-          jumpbox: tardis.slidev.org    # default empty
+          jumpbox: tardis.example.org   # default empty
           jumpboxUser: ec2-user         # default empty
           numretries: 5                 # default 5
           retryinterval: 30             # default 30

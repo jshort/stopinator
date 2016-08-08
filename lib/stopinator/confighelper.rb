@@ -10,19 +10,19 @@ module ConfigHelper
     aws_config_file = File.expand_path(configFile)
 
     unless File.exist?(aws_config_file)
-      configFileNotExist aws_config_file
+      config_file_not_exist aws_config_file
       puts op
       exit 1
     end
 
     aws_config = YAML.load(File.read(aws_config_file))
 
-    unless (aws_config.kind_of?(Hash) && aws_config.keys.include?("access_key_id") && aws_config.keys.include?("secret_access_key"))
-      awsConfigFileMalformed
+    unless aws_config.kind_of?(Hash) && aws_config.keys.include?('access_key_id') && aws_config.keys.include?('secret_access_key')
+      aws_config_malformed
       puts op
       exit 1
     end
-    
+
     aws_config
 
   end
@@ -31,23 +31,23 @@ module ConfigHelper
   ###########################  Environment Config Setup ################################
   ######################################################################################
 
-  def ConfigHelper.envConfigSetup(configFile, op=nil)
+  def ConfigHelper.env_config_setup(configFile, op = nil)
     env_config_file = File.expand_path(configFile)
 
     unless File.exist?(env_config_file)
-      configFileNotExist env_config_file
+      config_file_not_exist env_config_file
       puts op
       exit 1
     end
 
     env_config = YAML.load(File.read(env_config_file))
 
-    unless (env_config.kind_of?(Hash) && validateEnvConfig(env_config))
+    unless (env_config.kind_of?(Hash) && validate_env_config(env_config))
       envConfigFileMalformed
       puts op
       exit 1
     end
-    
+
     env_config
   end
 
@@ -56,21 +56,21 @@ module ConfigHelper
   ######################################################################################
 
 
-  def ConfigHelper.validateEnvConfig(env_config_hash={})
+  def ConfigHelper.validate_env_config(env_config_hash={})
     true
   end
 
-  def ConfigHelper.configFileNotExist(configfile)
+  def ConfigHelper.config_file_not_exist(configfile)
     puts <<-END
 ------------------------------------------------------------
-The specified file : #{configfile}, 
+The specified file : #{configfile},
     does not exist, please correct the path
 ------------------------------------------------------------
   END
 
   end
 
-  def ConfigHelper.awsConfigFileMalformed
+  def ConfigHelper.aws_config_malformed
     puts <<-END
 --------------------------------------------------------------------------
 aws_config.yml is formatted incorrectly.  Please use the following format:

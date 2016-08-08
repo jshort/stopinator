@@ -14,8 +14,8 @@ EOS
   exit(0)
 end
 
-desc "Run the specs under spec/models"
+desc 'Run the specs under spec/models'
 RSpec::Core::RakeTask.new do |t|
-  t.rspec_opts = ['--options', "spec/spec.opts"]
+  t.rspec_opts = ['--options', 'spec/spec.opts']
   t.pattern = 'spec/**/*_spec.rb'
 end
